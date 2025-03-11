@@ -46,6 +46,8 @@ interface t {
 	CatalogSearchParams: t.check<CatalogSearchParams>;
 	/** checks to see if `value` is a CFrame */
 	CFrame: t.check<CFrame>;
+	/** checks to see if `value` is of type Content */
+	Content: t.check<Content>;
 	/** checks to see if `value` is a Color3 */
 	Color3: t.check<Color3>;
 	/** checks to see if `value` is a ColorSequence */
