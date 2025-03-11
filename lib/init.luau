@@ -1,3 +1,6 @@
+--!nocheck
+--!native
+
 -- t: a runtime typechecker for Roblox
 
 local t = {}
@@ -201,6 +204,15 @@ t.CatalogSearchParams = t.typeof("CatalogSearchParams")
 	@returns True if the condition is satisfied, false otherwise
 **--]]
 t.CFrame = t.typeof("CFrame")
+
+--[[**
+	ensures Roblox Content type
+
+	@param value The value to check against
+
+	@returns True if the condition is satisfied, false otherwise
+**--]]
+t.Content = t.typeof("Content")
 
 --[[**
 	ensures Roblox Color3 type
@@ -518,14 +530,14 @@ t.Vector3int16 = t.typeof("Vector3int16")
 function t.literalList(literals)
 	-- optimization for primitive types
 	local set = {}
-	for _, literal in ipairs(literals) do
+	for _, literal in literals do
 		set[literal] = true
 	end
 	return function(value)
 		if set[value] then
 			return true
 		end
-		for _, literal in ipairs(literals) do
+		for _, literal in literals do
 			if literal == value then
 				return true
 			end
@@ -580,8 +592,8 @@ t.exactly = t.literal
 function t.keyOf(keyTable)
 	local keys = {}
 	local length = 0
-	for key in pairs(keyTable) do
-		length = length + 1
+	for key in keyTable do
+		length += 1
 		keys[length] = key
 	end
 
@@ -598,8 +610,8 @@ end
 function t.valueOf(valueTable)
 	local values = {}
 	local length = 0
-	for _, value in pairs(valueTable) do
-		length = length + 1
+	for _, value in valueTable do
+		length += 1
 		values[length] = value
 	end
 
@@ -843,7 +855,7 @@ function t.tuple(...)
 	local checks = { ... }
 	return function(...)
 		local args = { ... }
-		for i, check in ipairs(checks) do
+		for i, check in checks do
 			local success, errMsg = check(args[i])
 			if success == false then
 				return false, string.format("Bad tuple index #%s:\n\t%s", i, errMsg or "")
@@ -869,7 +881,7 @@ function t.keys(check)
 			return false, tableErrMsg or ""
 		end
 
-		for key in pairs(value) do
+		for key in value do
 			local success, errMsg = check(key)
 			if success == false then
 				return false, string.format("bad key %s:\n\t%s", tostring(key), errMsg or "")
@@ -895,7 +907,7 @@ function t.values(check)
 			return false, tableErrMsg or ""
 		end
 
-		for key, val in pairs(value) do
+		for key, val in value do
 			local success, errMsg = check(val)
 			if success == false then
 				return false, string.format("bad value for key %s:\n\t%s", tostring(key), errMsg or "")
@@ -969,11 +981,11 @@ do
 			-- Count upwards using ipairs to avoid false positives from the behavior of #
 			local arraySize = 0
 
-			for _ in ipairs(value) do
-				arraySize = arraySize + 1
+			for _ in value do
+				arraySize += 1
 			end
 
-			for key in pairs(value) do
+			for key in value do
 				if key < 1 or key > arraySize then
 					return false, string.format("[array] key %s must be sequential", tostring(key))
 				end
@@ -1010,7 +1022,7 @@ do
 				return false, string.format("[strictArray] Array size exceeds limit of %d", #valueTypes)
 			end
 
-			for idx, typeFn in pairs(valueTypes) do
+			for idx, typeFn in valueTypes do
 				local typeSuccess, typeErrMsg = typeFn(value[idx])
 				if not typeSuccess then
 					return false, string.format("[strictArray] Array index #%d - %s", idx, typeErrMsg)
@@ -1035,7 +1047,7 @@ do
 		assert(callbackArray(checks))
 
 		return function(value)
-			for _, check in ipairs(checks) do
+			for _, check in checks do
 				if check(value) then
 					return true
 				end
@@ -1072,7 +1084,7 @@ do
 		assert(callbackArray(checks))
 
 		return function(value)
-			for _, check in ipairs(checks) do
+			for _, check in checks do
 				local success, errMsg = check(value)
 				if not success then
 					return false, errMsg or ""
@@ -1117,7 +1129,7 @@ do
 				return false, tableErrMsg or ""
 			end
 
-			for key, check in pairs(checkTable) do
+			for key, check in checkTable do
 				local success, errMsg = check(value[key])
 				if success == false then
 					return false, string.format("[interface] bad value for %s:\n\t%s", tostring(key), errMsg or "")
@@ -1143,14 +1155,14 @@ do
 				return false, tableErrMsg or ""
 			end
 
-			for key, check in pairs(checkTable) do
+			for key, check in checkTable do
 				local success, errMsg = check(value[key])
 				if success == false then
 					return false, string.format("[interface] bad value for %s:\n\t%s", tostring(key), errMsg or "")
 				end
 			end
 
-			for key in pairs(value) do
+			for key in value do
 				if not checkTable[key] then
 					return false, string.format("[interface] unexpected field %q", tostring(key))
 				end
@@ -1315,7 +1327,7 @@ do
 			end
 
 			local childrenByName = {}
-			for _, child in ipairs(value:GetChildren()) do
+			for _, child in value:GetChildren() do
 				local name = child.Name
 				if checkTable[name] then
 					if childrenByName[name] then
@@ -1326,7 +1338,7 @@ do
 				end
 			end
 
-			for name, check in pairs(checkTable) do
+			for name, check in checkTable do
 				local success, errMsg = check(childrenByName[name])
 				if not success then
 					return false, string.format("[%s.%s] %s", value:GetFullName(), name, errMsg or "")
