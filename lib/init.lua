@@ -522,7 +522,7 @@ t.Vector3int16 = t.typeof("Vector3int16")
 
 	@param literals The literals to check against
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.literalList(literals)
 	-- optimization for primitive types
@@ -549,7 +549,7 @@ end
 
 	@param literal The literal to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.literal(...)
 	local size = select("#", ...)
@@ -640,7 +640,7 @@ end
 
 	@param min The minimum to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.numberMin(min)
 	return function(value)
@@ -662,7 +662,7 @@ end
 
 	@param max The maximum to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.numberMax(max)
 	return function(value)
@@ -684,7 +684,7 @@ end
 
 	@param min The minimum to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.numberMinExclusive(min)
 	return function(value)
@@ -706,7 +706,7 @@ end
 
 	@param max The maximum to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.numberMaxExclusive(max)
 	return function(value)
@@ -726,14 +726,14 @@ end
 --[[**
 	ensures value is a number where value > 0
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 t.numberPositive = t.numberMinExclusive(0)
 
 --[[**
 	ensures value is a number where value < 0
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 t.numberNegative = t.numberMaxExclusive(0)
 
@@ -743,7 +743,7 @@ t.numberNegative = t.numberMaxExclusive(0)
 	@param min The minimum to use
 	@param max The maximum to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.numberConstrained(min, max)
 	assert(t.number(min))
@@ -772,7 +772,7 @@ end
 	@param min The minimum to use
 	@param max The maximum to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.numberConstrainedExclusive(min, max)
 	assert(t.number(min))
@@ -800,7 +800,7 @@ end
 
 	@param string pattern to check against
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.match(pattern)
 	assert(t.string(pattern))
@@ -823,7 +823,7 @@ end
 
 	@param check The check to use
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.optional(check)
 	assert(t.callback(check))
@@ -846,7 +846,7 @@ end
 
 	@param ... The type definition for the tuples
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.tuple(...)
 	local checks = { ... }
@@ -868,7 +868,7 @@ end
 
 	@param check The function to use to check the keys
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.keys(check)
 	assert(t.callback(check))
@@ -894,7 +894,7 @@ end
 
 	@param check The function to use to check the values
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.values(check)
 	assert(t.callback(check))
@@ -921,7 +921,7 @@ end
 	@param keyCheck The function to use to check the keys
 	@param valueCheck The function to use to check the values
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.map(keyCheck, valueCheck)
 	assert(t.callback(keyCheck))
@@ -949,7 +949,7 @@ end
 
 	@param valueCheck The function to use to check the values
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.set(valueCheck)
 	return t.map(valueCheck, t.literal(true))
@@ -962,7 +962,7 @@ do
 
 		@param check The check to compare all values with
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.array(check)
 		assert(t.callback(check))
@@ -1002,7 +1002,7 @@ do
 
 		@param check The check to compare all values with
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.strictArray(...)
 		local valueTypes = { ... }
@@ -1038,7 +1038,7 @@ do
 
 		@param checks The checks to union
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.unionList(checks)
 		assert(callbackArray(checks))
@@ -1059,7 +1059,7 @@ do
 
 		@param ... The checks to union
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.union(...)
 		return t.unionList({ ... })
@@ -1075,7 +1075,7 @@ do
 
 		@param checks The checks to intersect
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.intersectionList(checks)
 		assert(callbackArray(checks))
@@ -1097,7 +1097,7 @@ do
 
 		@param ... The checks to intersect
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.intersection(...)
 		return t.intersectionList({ ... })
@@ -1116,7 +1116,7 @@ do
 
 		@param checkTable The interface definition
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.interface(checkTable)
 		assert(checkInterface(checkTable))
@@ -1142,7 +1142,7 @@ do
 
 		@param checkTable The interface definition
 
-		@returns A function that will return True iff the condition is passed
+		@returns A function that will return true iff the condition is passed
 	**--]]
 	function t.strictInterface(checkTable)
 		assert(checkInterface(checkTable))
@@ -1175,7 +1175,7 @@ end
 
 	@param className The class name to check for
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.instanceOf(className, childTable)
 	assert(t.string(className))
@@ -1213,7 +1213,7 @@ t.instance = t.instanceOf
 
 	@param className The class name to check for
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.instanceIsA(className, childTable)
 	assert(t.string(className))
@@ -1249,7 +1249,7 @@ end
 
 	@param enum The enum to check
 
-	@returns A function that will return True iff the condition is passed
+	@returns A function that will return true iff the condition is passed
 **--]]
 function t.enum(enum)
 	assert(t.Enum(enum))
