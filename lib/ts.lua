@@ -522,7 +522,7 @@ t.Vector3int16 = t.typeof("Vector3int16")
 
 	@param literals The literals to check against
 
-	@returns A function that will return true iff the condition is passed
+	@returns A function that will return true if the condition is passed
 **--]]
 function t.literalList(literals)
 	-- optimization for primitive types
