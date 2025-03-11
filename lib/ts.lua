@@ -203,6 +203,15 @@ t.CatalogSearchParams = t.typeof("CatalogSearchParams")
 t.CFrame = t.typeof("CFrame")
 
 --[[**
+	ensures Roblox Content type
+
+	@param value The value to check against
+
+	@returns True iff the condition is satisfied, false otherwise
+**--]]
+t.Content = t.typeof("Content")
+
+--[[**
 	ensures Roblox Color3 type
 
 	@param value The value to check against
