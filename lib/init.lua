@@ -1,23 +1,26 @@
+--!strict
 -- t: a runtime typechecker for Roblox
 
 local t = {}
 
-function t.type(typeName)
+type check = (any) -> (boolean, string?)
+
+function t.type(typeName: string): check
 	return function(value)
 		local valueType = type(value)
 		if valueType == typeName then
-			return true
+			return true, nil
 		else
 			return false, string.format("%s expected, got %s", typeName, valueType)
 		end
 	end
 end
 
-function t.typeof(typeName)
+function t.typeof(typeName: string): check
 	return function(value)
 		local valueType = typeof(value)
 		if valueType == typeName then
-			return true
+			return true, nil
 		else
 			return false, string.format("%s expected, got %s", typeName, valueType)
 		end
@@ -31,9 +34,9 @@ end
 
 	@returns True iff the condition is satisfied, false otherwise
 **--]]
-function t.any(value)
+function t.any(value: any): (boolean, string?)
 	if value ~= nil then
-		return true
+		return true, nil
 	else
 		return false, "any expected, got nil"
 	end
@@ -131,11 +134,11 @@ t.vector = t.type("vector")
 
 	@returns True iff the condition is satisfied, false otherwise
 **--]]
-function t.number(value)
+function t.number(value: any): (boolean, string?)
 	local valueType = typeof(value)
 	if valueType == "number" then
 		if value == value then
-			return true
+			return true, nil
 		else
 			return false, "unexpected NaN value"
 		end
@@ -151,11 +154,11 @@ end
 
 	@returns True iff the condition is satisfied, false otherwise
 **--]]
-function t.nan(value)
+function t.nan(value: any): (boolean, string?)
 	local valueType = typeof(value)
 	if valueType == "number" then
 		if value ~= value then
-			return true
+			return true, nil
 		else
 			return false, "unexpected non-NaN value"
 		end
@@ -201,15 +204,6 @@ t.CatalogSearchParams = t.typeof("CatalogSearchParams")
 	@returns True iff the condition is satisfied, false otherwise
 **--]]
 t.CFrame = t.typeof("CFrame")
-
---[[**
-	ensures Roblox Content type
-
-	@param value The value to check against
-
-	@returns True iff the condition is satisfied, false otherwise
-**--]]
-t.Content = t.typeof("Content")
 
 --[[**
 	ensures Roblox Color3 type
@@ -518,40 +512,13 @@ t.Vector3 = t.typeof("Vector3")
 t.Vector3int16 = t.typeof("Vector3int16")
 
 --[[**
-	ensures value is any of the given literal values
-
-	@param literals The literals to check against
-
-	@returns A function that will return true if the condition is passed
-**--]]
-function t.literalList(literals)
-	-- optimization for primitive types
-	local set = {}
-	for _, literal in ipairs(literals) do
-		set[literal] = true
-	end
-	return function(value)
-		if set[value] then
-			return true
-		end
-		for _, literal in ipairs(literals) do
-			if literal == value then
-				return true
-			end
-		end
-
-		return false, "bad type for literal list"
-	end
-end
-
---[[**
 	ensures value is a given literal value
 
 	@param literal The literal to use
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.literal(...)
+function t.literal(...): check
 	local size = select("#", ...)
 	if size == 1 then
 		local literal = ...
@@ -560,7 +527,7 @@ function t.literal(...)
 				return false, string.format("expected %s, got %s", tostring(literal), tostring(value))
 			end
 
-			return true
+			return true, nil
 		end
 	else
 		local literals = {}
@@ -569,7 +536,7 @@ function t.literal(...)
 			literals[i] = t.literal(value)
 		end
 
-		return t.unionList(literals)
+		return t.union(table.unpack(literals, 1, size))
 	end
 end
 
@@ -622,14 +589,14 @@ end
 
 	@returns True iff the condition is satisfied, false otherwise
 **--]]
-function t.integer(value)
+function t.integer(value: any): (boolean, string?)
 	local success, errMsg = t.number(value)
 	if not success then
 		return false, errMsg or ""
 	end
 
 	if value % 1 == 0 then
-		return true
+		return true, nil
 	else
 		return false, string.format("integer expected, got %s", value)
 	end
@@ -642,7 +609,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.numberMin(min)
+function t.numberMin(min): check
 	return function(value)
 		local success, errMsg = t.number(value)
 		if not success then
@@ -650,7 +617,7 @@ function t.numberMin(min)
 		end
 
 		if value >= min then
-			return true
+			return true, nil
 		else
 			return false, string.format("number >= %s expected, got %s", min, value)
 		end
@@ -664,7 +631,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.numberMax(max)
+function t.numberMax(max): check
 	return function(value)
 		local success, errMsg = t.number(value)
 		if not success then
@@ -672,7 +639,7 @@ function t.numberMax(max)
 		end
 
 		if value <= max then
-			return true
+			return true, nil
 		else
 			return false, string.format("number <= %s expected, got %s", max, value)
 		end
@@ -686,7 +653,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.numberMinExclusive(min)
+function t.numberMinExclusive(min): check
 	return function(value)
 		local success, errMsg = t.number(value)
 		if not success then
@@ -694,7 +661,7 @@ function t.numberMinExclusive(min)
 		end
 
 		if min < value then
-			return true
+			return true, nil
 		else
 			return false, string.format("number > %s expected, got %s", min, value)
 		end
@@ -708,7 +675,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.numberMaxExclusive(max)
+function t.numberMaxExclusive(max): check
 	return function(value)
 		local success, errMsg = t.number(value)
 		if not success then
@@ -716,7 +683,7 @@ function t.numberMaxExclusive(max)
 		end
 
 		if value < max then
-			return true
+			return true, nil
 		else
 			return false, string.format("number < %s expected, got %s", max, value)
 		end
@@ -745,7 +712,7 @@ t.numberNegative = t.numberMaxExclusive(0)
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.numberConstrained(min, max)
+function t.numberConstrained(min, max): check
 	assert(t.number(min))
 	assert(t.number(max))
 	local minCheck = t.numberMin(min)
@@ -762,7 +729,7 @@ function t.numberConstrained(min, max)
 			return false, maxErrMsg or ""
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -774,7 +741,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.numberConstrainedExclusive(min, max)
+function t.numberConstrainedExclusive(min, max): check
 	assert(t.number(min))
 	assert(t.number(max))
 	local minCheck = t.numberMinExclusive(min)
@@ -791,7 +758,7 @@ function t.numberConstrainedExclusive(min, max)
 			return false, maxErrMsg or ""
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -802,7 +769,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.match(pattern)
+function t.match(pattern): check
 	assert(t.string(pattern))
 	return function(value)
 		local stringSuccess, stringErrMsg = t.string(value)
@@ -810,11 +777,11 @@ function t.match(pattern)
 			return false, stringErrMsg
 		end
 
-		if string.match(value, pattern) == nil then
+		if not string.match(value, pattern) then
 			return false, string.format("%q failed to match pattern %q", value, pattern)
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -825,16 +792,16 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.optional(check)
+function t.optional(check): check
 	assert(t.callback(check))
 	return function(value)
 		if value == nil then
-			return true
+			return true, nil
 		end
 
 		local success, errMsg = check(value)
 		if success then
-			return true
+			return true, nil
 		else
 			return false, string.format("(optional) %s", errMsg or "")
 		end
@@ -848,18 +815,18 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.tuple(...)
+function t.tuple(...: check): check
 	local checks = { ... }
 	return function(...)
 		local args = { ... }
 		for i, check in ipairs(checks) do
 			local success, errMsg = check(args[i])
 			if success == false then
-				return false, string.format("Bad tuple index #%s:\n\t%s", i, errMsg or "")
+				return false, string.format("Bad tuple index #%d:\n\t%s", i, errMsg or "")
 			end
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -870,7 +837,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.keys(check)
+function t.keys(check): check
 	assert(t.callback(check))
 	return function(value)
 		local tableSuccess, tableErrMsg = t.table(value)
@@ -885,7 +852,7 @@ function t.keys(check)
 			end
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -896,7 +863,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.values(check)
+function t.values(check): check
 	assert(t.callback(check))
 	return function(value)
 		local tableSuccess, tableErrMsg = t.table(value)
@@ -911,7 +878,7 @@ function t.values(check)
 			end
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -923,7 +890,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.map(keyCheck, valueCheck)
+function t.map(keyCheck, valueCheck): check
 	assert(t.callback(keyCheck))
 	assert(t.callback(valueCheck))
 	local keyChecker = t.keys(keyCheck)
@@ -940,7 +907,7 @@ function t.map(keyCheck, valueCheck)
 			return false, valueErr or ""
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -957,14 +924,14 @@ end
 
 do
 	local arrayKeysCheck = t.keys(t.integer)
---[[**
+	--[[**
 		ensures value is an array and all values of the array match check
 
 		@param check The check to compare all values with
 
 		@returns A function that will return true iff the condition is passed
 	**--]]
-	function t.array(check)
+	function t.array(check): check
 		assert(t.callback(check))
 		local valuesCheck = t.values(check)
 
@@ -978,7 +945,7 @@ do
 			-- Count upwards using ipairs to avoid false positives from the behavior of #
 			local arraySize = 0
 
-			for _ in ipairs(value) do
+			for _, _ in ipairs(value) do
 				arraySize = arraySize + 1
 			end
 
@@ -993,18 +960,18 @@ do
 				return false, string.format("[array] %s", valueErrMsg or "")
 			end
 
-			return true
+			return true, nil
 		end
 	end
 
---[[**
+	--[[**
 		ensures value is an array of a strict makeup and size
 
 		@param check The check to compare all values with
 
 		@returns A function that will return true iff the condition is passed
 	**--]]
-	function t.strictArray(...)
+	function t.strictArray(...): check
 		local valueTypes = { ... }
 		assert(t.array(t.callback)(valueTypes))
 
@@ -1026,27 +993,28 @@ do
 				end
 			end
 
-			return true
+			return true, nil
 		end
 	end
 end
 
 do
 	local callbackArray = t.array(t.callback)
---[[**
+	--[[**
 		creates a union type
 
-		@param checks The checks to union
+		@param ... The checks to union
 
 		@returns A function that will return true iff the condition is passed
 	**--]]
-	function t.unionList(checks)
+	function t.union(...): check
+		local checks = { ... }
 		assert(callbackArray(checks))
 
 		return function(value)
 			for _, check in ipairs(checks) do
 				if check(value) then
-					return true
+					return true, nil
 				end
 			end
 
@@ -1054,30 +1022,20 @@ do
 		end
 	end
 
---[[**
-		creates a union type
-
-		@param ... The checks to union
-
-		@returns A function that will return true iff the condition is passed
-	**--]]
-	function t.union(...)
-		return t.unionList({ ... })
-	end
-
---[[**
+	--[[**
 		Alias for t.union
 	**--]]
 	t.some = t.union
 
---[[**
+	--[[**
 		creates an intersection type
 
-		@param checks The checks to intersect
+		@param ... The checks to intersect
 
 		@returns A function that will return true iff the condition is passed
 	**--]]
-	function t.intersectionList(checks)
+	function t.intersection(...): check
+		local checks = { ... }
 		assert(callbackArray(checks))
 
 		return function(value)
@@ -1088,22 +1046,11 @@ do
 				end
 			end
 
-			return true
+			return true, nil
 		end
 	end
 
---[[**
-		creates an intersection type
-
-		@param ... The checks to intersect
-
-		@returns A function that will return true iff the condition is passed
-	**--]]
-	function t.intersection(...)
-		return t.intersectionList({ ... })
-	end
-
---[[**
+	--[[**
 		Alias for t.intersection
 	**--]]
 	t.every = t.intersection
@@ -1111,14 +1058,14 @@ end
 
 do
 	local checkInterface = t.map(t.any, t.callback)
---[[**
+	--[[**
 		ensures value matches given interface definition
 
 		@param checkTable The interface definition
 
 		@returns A function that will return true iff the condition is passed
 	**--]]
-	function t.interface(checkTable)
+	function t.interface(checkTable: { [any]: check }): check
 		assert(checkInterface(checkTable))
 		return function(value)
 			local tableSuccess, tableErrMsg = t.table(value)
@@ -1133,18 +1080,18 @@ do
 				end
 			end
 
-			return true
+			return true, nil
 		end
 	end
 
---[[**
+	--[[**
 		ensures value matches given interface definition strictly
 
 		@param checkTable The interface definition
 
 		@returns A function that will return true iff the condition is passed
 	**--]]
-	function t.strictInterface(checkTable)
+	function t.strictInterface(checkTable: { [any]: check }): check
 		assert(checkInterface(checkTable))
 		return function(value)
 			local tableSuccess, tableErrMsg = t.table(value)
@@ -1165,7 +1112,7 @@ do
 				end
 			end
 
-			return true
+			return true, nil
 		end
 	end
 end
@@ -1177,7 +1124,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.instanceOf(className, childTable)
+function t.instanceOf(className: string, childTable: { [string]: check }?): check
 	assert(t.string(className))
 
 	local childrenCheck
@@ -1190,6 +1137,7 @@ function t.instanceOf(className, childTable)
 		if not instanceSuccess then
 			return false, instanceErrMsg or ""
 		end
+		assert(typeof(value) == "Instance", "t.Instance returned true for non-Instance value")
 
 		if value.ClassName ~= className then
 			return false, string.format("%s expected, got %s", className, value.ClassName)
@@ -1202,7 +1150,7 @@ function t.instanceOf(className, childTable)
 			end
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -1215,7 +1163,7 @@ t.instance = t.instanceOf
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.instanceIsA(className, childTable)
+function t.instanceIsA(className: string, childTable: { [string]: check }?): check
 	assert(t.string(className))
 
 	local childrenCheck
@@ -1228,6 +1176,7 @@ function t.instanceIsA(className, childTable)
 		if not instanceSuccess then
 			return false, instanceErrMsg or ""
 		end
+		assert(typeof(value) == "Instance", "t.Instance returned true for non-Instance value")
 
 		if not value:IsA(className) then
 			return false, string.format("%s expected, got %s", className, value.ClassName)
@@ -1240,7 +1189,7 @@ function t.instanceIsA(className, childTable)
 			end
 		end
 
-		return true
+		return true, nil
 	end
 end
 
@@ -1251,7 +1200,7 @@ end
 
 	@returns A function that will return true iff the condition is passed
 **--]]
-function t.enum(enum)
+function t.enum(enum): check
 	assert(t.Enum(enum))
 	return function(value)
 		local enumItemSuccess, enumItemErrMsg = t.EnumItem(value)
@@ -1260,7 +1209,7 @@ function t.enum(enum)
 		end
 
 		if value.EnumType == enum then
-			return true
+			return true, nil
 		else
 			return false, string.format("enum of %s expected, got enum of %s", tostring(enum), tostring(value.EnumType))
 		end
@@ -1270,7 +1219,7 @@ end
 do
 	local checkWrap = t.tuple(t.callback, t.callback)
 
---[[**
+	--[[**
 		wraps a callback in an assert with checkArgs
 
 		@param callback The function to wrap
@@ -1303,7 +1252,7 @@ end
 do
 	local checkChildren = t.map(t.string, t.callback)
 
---[[**
+	--[[**
 		Takes a table where keys are child names and values are functions to check the children against.
 		Pass an instance tree into the function.
 		If at least one child passes each check, the overall check passes.
@@ -1314,7 +1263,7 @@ do
 
 		@returns A function that checks an instance tree
 	**--]]
-	function t.children(checkTable)
+	function t.children(checkTable: { [string]: check }): check
 		assert(checkChildren(checkTable))
 
 		return function(value)
@@ -1322,6 +1271,7 @@ do
 			if not instanceSuccess then
 				return false, instanceErrMsg or ""
 			end
+			assert(typeof(value) == "Instance", "t.Instance returned true for non-Instance value")
 
 			local childrenByName = {}
 			for _, child in ipairs(value:GetChildren()) do
@@ -1342,7 +1292,7 @@ do
 				end
 			end
 
-			return true
+			return true, nil
 		end
 	end
 end
